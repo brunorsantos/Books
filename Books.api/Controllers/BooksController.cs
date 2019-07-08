@@ -10,53 +10,36 @@ using System.Threading.Tasks;
 
 namespace Books.api.Controllers
 {
-    [Route("api/books")]
+    [Route("api/bookcollections")]
     [ApiController]
-    public class BooksController : ControllerBase
+    public class BookCollections : ControllerBase
     {
         private IBooksRepository _booksRepository;
         private IMapper _mapper;
 
-        public BooksController(IBooksRepository booksRepository, IMapper mapper)
+        public BookCollections(IBooksRepository booksRepository, IMapper mapper)
         {
             _booksRepository = booksRepository ?? throw new ArgumentNullException(nameof(booksRepository));
             _mapper = mapper;
         }
 
-        [HttpGet]
+        [HttpPost]
         [BooksResultFilter]
-        public async Task<IActionResult> GetBooks()
+        public async Task<IActionResult> CreatBookCollection([FromBody] IEnumerable<BookForCreation> bookCollection)
         {
-            var bookEntities = await _booksRepository.GetBooksAsync();
 
-            return Ok(bookEntities);
-        }
-        [HttpGet]
-        [BookResultFilter]
-        [Route("{id}", Name = "GetBook" )]
-        public async Task<IActionResult> GetBook(Guid id)
-        {
-            var bookEntity = await _booksRepository.GetBookAsync(id);
-            if (bookEntity == null)
+
+            var bookEntities = _mapper.Map<IEnumerable<Entities.Book>>(bookCollection);
+
+            foreach (var bookEntity in bookEntities)
             {
-                return NotFound();
+                _booksRepository.AddBook(bookEntity);
             }
 
-            return Ok(bookEntity);
-        }
-
-        [HttpPost]
-        [BookResultFilter]
-        public async Task<IActionResult> CreateBook([FromBody]BookForCreation book)
-        {
-            var bookEntity = _mapper.Map<Entities.Book>(book);
-            _booksRepository.AddBook(bookEntity);
             await _booksRepository.SaveChangesAsync();
 
-
-            await _booksRepository.GetBookAsync(bookEntity.Id);
-
-            return CreatedAtRoute("GetBook", new {id = bookEntity.Id }, bookEntity);
+            return Ok();
         }
     }
+        
 }
