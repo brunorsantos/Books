@@ -34,7 +34,13 @@ namespace Books.api
             services.AddDbContext<BooksContext>(o => o.UseSqlServer(connectionString));
             services.AddScoped<IBooksRepository, BooksRepository>();
 
-            services.AddAutoMapper();
+            var mappingConfig = new MapperConfiguration(mc =>
+            {
+                mc.AddProfile(new BooksProfile());
+            });
+            IMapper mapper = mappingConfig.CreateMapper();
+            services.AddSingleton(mapper);
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

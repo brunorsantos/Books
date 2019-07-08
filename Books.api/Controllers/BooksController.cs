@@ -1,4 +1,5 @@
-﻿using Books.api.Services;
+﻿using Books.api.Filters;
+using Books.api.Services;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -19,6 +20,7 @@ namespace Books.api.Controllers
         }
 
         [HttpGet]
+        [BooksResultFilter]
         public async Task<IActionResult> GetBooks()
         {
             var bookEntities = await _booksRepository.GetBooksAsync();
@@ -26,6 +28,7 @@ namespace Books.api.Controllers
             return Ok(bookEntities);
         }
         [HttpGet]
+        [BookResultFilter]
         [Route("{id}")]
         public async Task<IActionResult> GetBook(Guid id)
         {
