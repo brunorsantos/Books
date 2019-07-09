@@ -12,6 +12,7 @@ namespace Books.api.Controllers
 {
     [Route("api/bookcollections")]
     [ApiController]
+    [BooksResultFilter]
     public class BookCollections : ControllerBase
     {
         private IBooksRepository _booksRepository;
@@ -23,8 +24,23 @@ namespace Books.api.Controllers
             _mapper = mapper;
         }
 
+        // api/bookcollections/(id1,id2) 
+        [HttpGet("({bookIds})", Name = "GetBookCollection")]
+        public async Task<IActionResult> GetBookCollection(
+            [ModelBinder(BinderType = typeof(ArrayModelBinder))] IEnumerable<Guid> bookIds)
+        {
+            var bookEntities = await _booksRepository.GetBooksAsync(bookIds);
+
+            if (bookIds.Count() != bookEntities.Count())
+            {
+                return NotFound();
+            }
+
+            return Ok(bookEntities);
+        }
+
+
         [HttpPost]
-        [BooksResultFilter]
         public async Task<IActionResult> CreatBookCollection([FromBody] IEnumerable<BookForCreation> bookCollection)
         {
 
@@ -38,7 +54,15 @@ namespace Books.api.Controllers
 
             await _booksRepository.SaveChangesAsync();
 
-            return Ok();
+            var bookEntitiesReturn = await _booksRepository.GetBooksAsync(bookEntities.Select(b => b.Id).ToList());
+
+            var bookIds = string.Join(",", bookEntitiesReturn.Select(a => a.Id));
+
+            return CreatedAtRoute("GetBookCollection",
+              new { bookIds },
+              bookEntitiesReturn);
+
+       
         }
     }
         
